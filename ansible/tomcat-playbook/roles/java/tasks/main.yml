@@ -1,0 +1,48 @@
+---
+- name: Install repository for java
+  apt_repository: repo='ppa:openjdk-r/ppa'
+
+- name: Updating cache for java 
+  apt: update_cache=yes
+
+- name: Insatll Openjdk-8
+  apt: pkg={{ item }} state=latest
+  with_items:
+    - openjdk-8-jdk
+    - openjdk-8-jre
+
+- name: Add JRE binaries to PATH environment variable
+  lineinfile: >
+    dest={{ env_file_path }} 
+    state=present 
+    backrefs=yes 
+    regexp='PATH=(["]*)((?!.*?{{ java_home }}/jre/bin).*?)(["]*)$' 
+    line="PATH=\1\2:{{ java_home }}/jre/bin\3"
+
+- name: Add Java binaries to PATH environment variable
+  lineinfile: >
+    dest={{ env_file_path }} 
+    state=present 
+    backrefs=yes 
+    regexp='PATH=(["]*)((?!.*?{{ java_home }}/bin).*?)(["]*)$' 
+    line="PATH=\1\2:{{ java_home }}/bin\3"
+
+- name: Setting JAVA_HOME environment variable
+  lineinfile: >
+    dest={{ env_file_path }} 
+    regexp='^JAVA_HOME.*'
+    line='JAVA_HOME={{ java_home }}'
+    insertafter='^PATH.*'
+ 
+- name: Setting JRE_HOME environment variable
+  lineinfile: >
+    dest={{ env_file_path }} 
+    regexp='^JRE_HOME=.*' 
+    line='JRE_HOME={{ java_home }}/jre' 
+    insertafter='^JAVA_HOME.*'
+
+- name: setup nginx sites-available symlink
+  file: path=/usr/lib/jvm/default-java
+    src=/usr/lib/jvm/java-1.8.0-openjdk-amd64 
+    state=link 
+    force=yes

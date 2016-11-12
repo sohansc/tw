@@ -1,0 +1,14 @@
+---
+ - name: Tomacat configuration
+   hosts: all
+   sudo: yes
+   tasks:
+    - name: Install Prerequisites.
+      apt: pkg={{ item }} state=latest
+      with_items:
+        - curl
+        - zip
+        - unzip
+   roles:
+        - java
+        - tomcat

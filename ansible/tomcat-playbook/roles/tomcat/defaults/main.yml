@@ -1,0 +1,6 @@
+catalina_home: /usr/share/tomcat7
+conf_path: /etc/tomcat7
+conf_file_name: tomcat-users.xml
+server_path: /usr/share/tomcat7/conf
+server_file_name: server.xml
+webapps_path: /var/lib/tomcat7/webapps

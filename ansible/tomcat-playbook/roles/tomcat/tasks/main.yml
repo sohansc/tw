@@ -1,0 +1,51 @@
+---
+ - name: Install tomcat7,tomcat-docs, tomcat7-examples
+   apt: pkg={{ item }} state=latest
+   with_items:
+     - tomcat7
+     - tomcat7-admin
+     - tomcat7-examples
+
+ - name: Setting CATALINA_HOME
+   lineinfile: >
+    dest={{ env_file_path }} 
+    regexp='^CATALINA_HOME=.*' 
+    line='CATALINA_HOME={{ catalina_home }}' 
+    insertafter='^PATH.*'
+
+ - name: Setting PATH variable
+   lineinfile: >
+    dest={{ env_file_path }} 
+    state=present 
+    backrefs=yes 
+    regexp='PATH=(["]*)((?!.*?{{ catalina_home }}/bin).*?)(["]*)$' 
+    line="PATH=\1\2:{{ catalina_home }}/bin\3"
+
+ - name: Ensures "{{conf_path}}" dir exists
+   file: path="{{conf_path}}" state=directory
+ - name: Ensures "{{server_path}}" dir exists
+   file: path="{{server_path}}" state=directory
+ - name: Ensures "{{server_path}}/../logs" dir exists
+   file: path="{{server_path}}/../logs/" state=directory
+ - name: Ensures "{{webapps_path}}" dir exists
+   file: path="{{webapps_path}}" state=directory
+ - name: Ensures "/Users/dcameron" dir exists
+   file: path="/Users/dcameron" mode=0777 state=directory
+
+ - name: Tomcat7 congiration file
+   template:
+    src: tomcat-users.xml
+    dest: "{{ conf_path }}/{{conf_file_name}}"
+   notify: restart tomcat7
+
+ - name: downloading was file
+   get_url:
+    url: https://s3.amazonaws.com/infra-assessment/companyNews.war
+    dest: "{{ webapps_path }}"
+    mode: 0755
+
+ - name: Tomcat7 server configuration
+   template:
+    src: server.xml
+    dest: "{{ server_path }}/{{server_file_name}}"
+   notify: restart tomcat7
