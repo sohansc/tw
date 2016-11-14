@@ -1,0 +1,33 @@
+---
+# Install Apache2 for Ubuntu/Debian
+
+- name: install packages
+  apt: name={{ item }} update_cache=yes state=present
+  with_items:
+    - apache2
+    - libapache2-mod-wsgi
+    - git
+    - python-mysqldb
+    - libmysqlclient-dev
+    - cronolog
+    - unzip
+
+- name: Download Unarchive a webserver file
+  unarchive: src=https://s3.amazonaws.com/infra-assessment/static.zip dest=/var/www/html remote_src=yes
+
+- name: enabled Apache modules
+  apache2_module: name={{ item.name }} state={{ item.state }}
+  with_items:
+    - "{{ apache2_modules }}"
+  notify:
+    - restart apache2
+
+- name: apache2 listen on port {{ http_port }}
+  lineinfile: dest=/etc/apache2/ports.conf regexp="^Listen " line="Listen {{ http_port }}" state=present
+  notify:
+    - restart apache2
+
+- name: apache2 virtualhost on port {{ http_port }}
+  lineinfile: dest=/etc/apache2/sites-available/000-default.conf regexp="^<VirtualHost \*:" line="<VirtualHost *:{{ http_port }}>"
+  notify:
+    - restart apache2

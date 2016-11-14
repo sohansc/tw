@@ -1,0 +1,11 @@
+---
+
+apache2_modules:
+  - { name: ssl, state: present }
+  - { name: mime, state: present }
+  - { name: headers, state: present }
+  - { name: rewrite, state: present }
+  - { name: expires, state: present }
+  - { name: wsgi, state: present }
+
+http_port: 80
