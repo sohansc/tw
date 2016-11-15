@@ -33,7 +33,7 @@ To destroy instance :
 ```
 <APP_NAME>      Name of the app you wish to set
 <ENVIRONMENT>   The environment name (dev|prod|stag|perf)
-<COUNT>         Number of Wordpress instances required (integer)
+<COUNT>         Number of Wordpress instances required (integer 1 : one webserver, one appserver, 2: two webserver, app server)
 <SIZE>          AWS instance type for example "t2.*”
 
 ```
