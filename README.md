@@ -38,4 +38,6 @@ To destroy instance :
 
 ```
 
-
+To be done: 
+1. Incorporating version war and jar deployment in provioned server.
+2. Distinguish appserver and webserver count.
