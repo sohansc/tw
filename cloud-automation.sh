@@ -78,22 +78,19 @@ if [ $? -ne 0 ]; then
 fi
 echo "Ansible is present..."
 
-
-#echo "terraform plan -var 'access_key=${ACCESS_KEY}' -var 'secret_key=${SECRET_KEY}'"
 terraform apply -var-file=./terraform/varible.tfvars -var app=$APP -var env=$ENV -var ec2_size=$EC2_SIZE -var ec2_count=$EC2_COUNT -state=./terraform/terraform.tfstate ./terraform/.
-terraform output -state=./terraform/terraform.tfstate aws_instances_ip | sed -e s/,//g > ./terraform/hosts.txt
-
-
+terraform output -state=./terraform/terraform.tfstate aws_instances_appserver_ip | sed -e s/,//g > ./terraform/hosts_appserver_${ENV}_${APP}.txt
+terraform output -state=./terraform/terraform.tfstate aws_instances_webserver_ip | sed -e s/,//g > ./terraform/hosts_webserver_${ENV}_${APP}.txt
 export ANSIBLE_HOST_KEY_CHECKING=False
 
 #!/bin/bash 
         COUNTER=1
-	Conn_check=`ansible --private-key $ANSIBLE_SSH_PRIVATE_KEY_FILE -u ubuntu -i ./terraform/hosts.txt -m ping all`
+	Conn_check=`ansible --private-key $ANSIBLE_SSH_PRIVATE_KEY_FILE -u ubuntu -i ./terraform/hosts_appserver_${ENV}_${APP}.txt -m ping all`
 	while [[  $COUNTER -lt 20  && ! $Conn_check =~ "SUCCESS" ]]; do
 	     echo "$Conn_check"
              echo "AWS instance is still not UP and Running...Failed to do ssh `expr 10 \* $COUNTER` Second elapsed"
              let COUNTER=COUNTER+1 
-	     Conn_check=$(echo `ansible --private-key $ANSIBLE_SSH_PRIVATE_KEY_FILE -u ubuntu -i ./terraform/hosts.txt -m ping all`)
+	     Conn_check=$(echo `ansible --private-key $ANSIBLE_SSH_PRIVATE_KEY_FILE -u ubuntu -i ./terraform/hosts_appserver_${ENV}_${APP}.txt -m ping all`)
 	     sleep 10;		
          done
 
@@ -105,11 +102,6 @@ else
 	exit 1
 fi
 
+ansible-playbook --private-key $ANSIBLE_SSH_PRIVATE_KEY_FILE -u ubuntu -i ./terraform/hosts_appserver_${ENV}_${APP}.txt ./ansible/tomcat-playbook/main.yml
+ansible-playbook --private-key $ANSIBLE_SSH_PRIVATE_KEY_FILE -u ubuntu -i ./terraform/hosts_webserver_${ENV}_${APP}.txt ./ansible/apache2/main.yml
 
-chmod 775 ./terraform/hosts.txt
-
-ansible-playbook --private-key $ANSIBLE_SSH_PRIVATE_KEY_FILE -u ubuntu -i ./terraform/hosts.txt ./ansible/docker.yml
-
-
-
- 

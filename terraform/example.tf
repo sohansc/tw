@@ -6,11 +6,11 @@ provider "aws" {
 # Create a new load balancer
 resource "aws_elb" "example" {
   name = "example-elb"
-  availability_zones = ["${aws_instance.example.*.availability_zone}"]
+  availability_zones = ["${aws_instance.appserver.*.availability_zone}"]
 
 
   listener {
-    instance_port = 8000
+    instance_port = 8080
     instance_protocol = "http"
     lb_port = 80
     lb_protocol = "http"
@@ -21,14 +21,14 @@ resource "aws_elb" "example" {
     healthy_threshold = 2
     unhealthy_threshold = 5
     timeout = 15
-    target = "HTTP:8000/wp-admin/install.php"
+    target = "HTTP:8080/"
     interval = 45
   }
 cross_zone_load_balancing = true
     idle_timeout = 400
     connection_draining = true
     connection_draining_timeout = 400
-  instances = ["${aws_instance.example.*.id}"]
+  instances = ["${aws_instance.appserver.*.id}"]
 security_groups = ["${aws_security_group.elb.id}"]
 tags {
         Env = "${var.env}"
@@ -58,7 +58,34 @@ resource "aws_security_group" "elb" {
 }
 
 #creating instance
-resource "aws_instance" "example" {
+resource "aws_instance" "appserver" {
+  ami           = "ami-0d729a60"
+  instance_type = "${var.ec2_size}"
+
+connection {
+    # The default username for our AMI
+    type = "ssh"
+    user = "ubuntu"
+    private_key = "${file(var.aws_instance_key_pem_file_path)}"
+    # The connection will use the local SSH agent for authentication.
+  }
+key_name = "${var.aws_instace_key_pem_file_name}"
+security_groups = ["${aws_security_group.default.name}"]
+count = "${var.ec2_count}"
+tags {
+        Name = "${var.app}-${count.index}"
+        Env = "${var.env}"
+}
+provisioner "remote-exec" {
+    inline = [
+      "sudo apt-get update -y"
+    ]
+
+}
+}
+
+#creating instance
+resource "aws_instance" "webserver" {
   ami           = "ami-0d729a60"
   instance_type = "${var.ec2_size}"
 
@@ -117,8 +144,8 @@ resource "aws_security_group" "default" {
 
 	#access from load balancer port
     ingress {
-        from_port = 8000
-        to_port = 8000
+        from_port = 8080
+        to_port = 8080
         protocol = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -132,8 +159,11 @@ resource "aws_security_group" "default" {
     }
 }
 
-output "aws_instances_ip" {
- value = "${split(",",join(",", aws_instance.example.*.public_ip))}" 
+output "aws_instances_appserver_ip" {
+ value = "${split(",",join(",", aws_instance.appserver.*.public_ip))}" 
+}
+output "aws_instances_webserver_ip" {
+ value = "${split(",",join(",", aws_instance.webserver.*.public_ip))}"
 }
 output "elb_dns" {
 value = "${aws_elb.example.dns_name}"
