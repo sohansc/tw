@@ -1,6 +1,6 @@
 #Application and Web Server Provisioning using AWS TERRAFORM ANSIBLE DOCKER
 
-A Terraform / Ansible / Docker config to deploy infrastructure on AWS : This script file and playbook create a number of AWS instance using Terraform  each one with docker image of Wordpress container, Load balancing is done automatically between multiple instances of Wordpress through AWS load balancer
+A Terraform / Ansible / Docker config to deploy infrastructure on AWS : This script file and playbook create a number of AWS instance using Terraform  and ansible-playbook, Load balancing is done automatically(if require) between multiple app instances of application through AWS load balancer
 
 #Prerequisite:
 1. Installation of Terraform :
